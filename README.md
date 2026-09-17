@@ -1,22 +1,27 @@
 # YOLOv8n-ResCBAM for Fire and Smoke Detection
 
-Official implementation accompanying the manuscript:
+[![Python 3.10](https://img.shields.io/badge/Python-3.10-3776AB.svg)](https://www.python.org/)
+[![PyTorch 2.1.2](https://img.shields.io/badge/PyTorch-2.1.2-EE4C2C.svg)](https://pytorch.org/)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+
+Official code release accompanying the manuscript:
 
 > **YOLOv8n-ResCBAM: A Lightweight Attention Network for Early Wildfire Detection Oriented to Smart City Monitoring**  
 > Peiman Parisouj, Hooman Aghalou, Sayed M. Bateni, Changhyun Jun, and Essam Heggy  
-> Manuscript no. `ARRAY-D-26-02892R1`, submitted to *Array*
+> Manuscript `ARRAY-D-26-02892R1`, submitted to *Array*
 
-This repository provides a controlled comparison of a vanilla YOLOv8n detector and 16 enhanced YOLOv8n configurations for fire and smoke detection:
+This repository provides a controlled comparison of vanilla YOLOv8n and 16 enhanced YOLOv8n configurations for fire and smoke detection:
 
 - 12 global-context configurations: `GC`, `GCT`, `GE`, and `SE`, each evaluated with the `M1`, `M2`, and `M3` insertion strategies.
-- 4 lightweight-attention configurations: `ECA`, `GAM`, `SA`, and `ResCBAM`.
+- 4 attention configurations: `ECA`, `GAM`, `SA`, and `ResCBAM`.
 - 1 vanilla YOLOv8n baseline.
 
-The models were evaluated on the [D-Fire dataset](https://github.com/gaia-solutions-on-demand/DFireDataset), which contains 21,527 images and 26,557 annotated fire/smoke bounding boxes. YOLOv8n-ResCBAM achieved the strongest overall result in the study, with an overall F1-score of **0.765**, smoke F1-score of **0.829**, and overall mAP50-95 of **0.465**.
+The contribution is a systematic evaluation of established context and attention modules in a common YOLOv8n framework, including placement analysis and class-specific evaluation for smoke and fire. The work does not claim to introduce a new attention operator.
 
-<!-- Replace this file with the final graphical abstract from the paper. -->
+On the isolated D-Fire test partition, YOLOv8n-ResCBAM achieved the best overall result in the study: **0.765 overall F1**, **0.829 smoke F1**, and **0.465 overall mAP50-95**.
+
 <p align="center">
-  <img src="assets/graphical_abstract.png" alt="Graphical abstract: attention-enhanced YOLOv8n for fire and smoke detection" width="950">
+  <img src="assets/graphical_abstract.png" alt="Graphical abstract of the attention-enhanced YOLOv8n fire and smoke detection study" width="950">
 </p>
 
 ## Contents
@@ -27,45 +32,49 @@ The models were evaluated on the [D-Fire dataset](https://github.com/gaia-soluti
 - [Installation](#installation)
 - [Dataset preparation](#dataset-preparation)
 - [Model catalog](#model-catalog)
+- [Verify the installation](#verify-the-installation)
 - [Training](#training)
+- [Resume training](#resume-training)
 - [Validation and test evaluation](#validation-and-test-evaluation)
 - [Inference](#inference)
 - [Export](#export)
 - [Paper results](#paper-results)
-- [Reproducing the paper protocol](#reproducing-the-paper-protocol)
+- [Reproducibility notes](#reproducibility-notes)
 - [Limitations](#limitations)
+- [Troubleshooting](#troubleshooting)
+- [Citation](#citation)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
+- [Support](#support)
 
 ## Highlights
 
-- Evaluates eight attention/context mechanisms within the same lightweight YOLOv8n framework.
-- Compares three global-context insertion strategies to isolate the effect of module placement.
-- Reports separate fire and smoke metrics instead of only aggregated performance.
-- Improves the baseline overall F1-score from **0.736** to **0.765** with ResCBAM.
-- Improves smoke recall from **0.766** to **0.814** and smoke F1-score from **0.803** to **0.829**.
-- Retains a compact model size: YOLOv8n-ResCBAM has **4.239 M parameters** and **10.5 GFLOPs**.
+- Evaluates eight established context/attention mechanisms within the same lightweight YOLOv8n framework.
+- Compares three global-context insertion strategies to study the effect of module placement.
+- Reports separate fire and smoke metrics in addition to aggregate performance.
+- Improves overall F1 from **0.736** for vanilla YOLOv8n to **0.765** with ResCBAM.
+- Improves smoke recall from **0.766** to **0.814** and smoke F1 from **0.803** to **0.829**.
+- Retains a compact detector: YOLOv8n-ResCBAM has **4.239 million parameters** and **10.5 GFLOPs** at 640 x 640 input resolution.
 
 ## Method overview
 
-The study extends YOLOv8n with four global-context mechanisms and four attention mechanisms. The global-context modules were evaluated at three different locations:
+The study evaluates four global-context mechanisms and four attention mechanisms. The global-context modules are evaluated at three insertion locations:
 
 | Strategy | Placement | Purpose |
 | --- | --- | --- |
 | M1 | After the SPPF layer at the end of the backbone | Enrich deep semantic features before multi-scale fusion |
 | M2 | After the final C2f block in the neck, immediately before detection | Reweight the final fused representation |
-| M3 | After each C2f block in the neck | Apply progressive context enhancement at multiple feature scales |
+| M3 | After the neck C2f blocks | Apply context enhancement at multiple feature scales |
 
-The four lightweight-attention models use the multi-position M3-style neck placement selected after the global-context experiments.
+The four attention models use the multi-position neck-integration pattern evaluated in the study.
 
-<!-- Replace with the paper's architecture/insertion-strategy figure. -->
 <p align="center">
-  <img src="assets/architecture_and_insertion_strategies.png" alt="YOLOv8n architecture and M1, M2, M3 insertion strategies" width="950">
+  <img src="assets/architecture_and_insertion_strategies.png" alt="YOLOv8n M1, M2, and M3 context-module insertion strategies" width="950">
 </p>
 
-### Modules
+### Evaluated modules
 
-| Family | Module | Configuration file prefix | Short description |
+| Family | Module | Configuration prefix | Description |
 | --- | --- | --- | --- |
 | Global context | Global Context block | `GC` | Attention pooling and residual context transformation |
 | Global context | Gaussian Context Transformer | `GCT` | Lightweight channel-context modeling and excitation |
@@ -79,8 +88,9 @@ The four lightweight-attention models use the multi-position M3-style neck place
 ## Repository structure
 
 ```text
-Fire-and-Smoke-Detection/
+Attention-Enhanced-YOLOv8n-Fire-Smoke-Detection/
 |-- Attentions/
+|   |-- LICENSE.txt
 |   |-- start_train.py
 |   `-- ultralytics/
 |       `-- cfg/models/v8/
@@ -90,6 +100,7 @@ Fire-and-Smoke-Detection/
 |           |-- yolov8_SA.yaml
 |           `-- yolov8_ResBlock_CBAM.yaml
 |-- Global_Contexts/
+|   |-- LICENSE.txt
 |   |-- start_train.py
 |   `-- ultralytics/
 |       `-- cfg/models/v8/
@@ -106,12 +117,18 @@ Fire-and-Smoke-Detection/
 |           |-- yolov8_SE_M1.yaml
 |           |-- yolov8_SE_M2.yaml
 |           `-- yolov8_SE_M3.yaml
-|-- assets/                        
-|-- requirements.txt
-`-- README.md
+|-- assets/
+|   |-- architecture_and_insertion_strategies.png
+|   |-- dfire_examples.png
+|   `-- graphical_abstract.png
+|-- LICENSE
+|-- README.md
+`-- requirements.txt
 ```
 
-`Attentions/` and `Global_Contexts/` contain separate modified Ultralytics source trees. Run each command from the repository root and use the launcher belonging to the requested model family. This ensures Python imports the correct local implementation rather than an unrelated globally installed Ultralytics package.
+`Attentions/` and `Global_Contexts/` contain separate modified Ultralytics source trees. Run training commands from the repository root with the launcher belonging to the requested model family. Run validation, inference, and export commands from the corresponding source directory as shown below. This ensures that Python imports the correct local custom modules.
+
+The bundled source is based on Ultralytics `8.0.147`. Do not replace the bundled `ultralytics/` directories with a newer release unless the custom modules, YAML parser registrations, checkpoints, and exports are ported and retested.
 
 ## Installation
 
@@ -122,9 +139,7 @@ git clone https://github.com/Hooman1996/Attention-Enhanced-YOLOv8n-Fire-Smoke-De
 cd Attention-Enhanced-YOLOv8n-Fire-Smoke-Detection
 ```
 
-Replace `OWNER/REPOSITORY` with this repository's final GitHub path.
-
-### 2. Create an isolated environment
+### 2. Create a Python 3.10 environment
 
 Using Conda:
 
@@ -134,52 +149,60 @@ conda activate fire-smoke-yolov8
 python -m pip install --upgrade pip
 ```
 
-Or using `venv`:
+Using `venv` on Linux or macOS:
 
 ```bash
-python -m venv .venv
-```
-
-Linux/macOS activation:
-
-```bash
+python3.10 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
-Windows PowerShell activation:
+Using `venv` on Windows PowerShell:
 
 ```powershell
+py -3.10 -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 ```
 
-### 3. Install dependencies
+### 3. Install PyTorch and repository dependencies
 
-Install a PyTorch build suitable for your CUDA/CPU environment, then install the repository requirements:
+The pinned environment uses PyTorch `2.1.2` and torchvision `0.16.2`.
+
+For an NVIDIA GPU with a CUDA 11.8-compatible driver:
 
 ```bash
+python -m pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu118
 python -m pip install -r requirements.txt
 ```
 
-Verify the environment:
+For CPU-only execution:
 
 ```bash
-python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
+python -m pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -r requirements.txt
 ```
 
-The bundled model code is based on Ultralytics `8.0.147`. Avoid replacing either bundled `ultralytics/` directory with a newer release unless you also port and test the custom module registrations and YAML parser changes.
+Verify PyTorch:
+
+```bash
+python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA available:', torch.cuda.is_available()); print('CUDA version:', torch.version.cuda)"
+```
 
 ## Dataset preparation
 
 ### D-Fire
 
-Download D-Fire using the links and license information in the [official D-Fire repository](https://github.com/gaia-solutions-on-demand/DFireDataset). Annotations use normalized YOLO bounding-box coordinates. The class order is:
+Download the images, labels, and official split resources from the [D-Fire repository](https://github.com/gaia-solutions-on-demand/DFireDataset). D-Fire contains 21,527 images and 26,557 bounding boxes: 14,692 fire boxes and 11,865 smoke boxes. The image collection is released under CC0-1.0 by the D-Fire project.
+
+The class order used in this study is:
 
 ```yaml
 0: smoke
 1: fire
 ```
 
-The split used in the manuscript is:
+The manuscript split is:
 
 | Split | Fire-only | Smoke-only | Fire and smoke | Background | Total images |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -188,34 +211,31 @@ The split used in the manuscript is:
 | Test | 220 | 1,186 | 895 | 2,005 | 4,306 |
 | **Total** | **1,164** | **5,867** | **4,658** | **9,838** | **21,527** |
 
-The complete dataset contains 14,692 fire boxes and 11,865 smoke boxes. Background images should have an empty label file or no objects, according to the data loader's supported YOLO convention.
-
-<!-- Replace with representative D-Fire samples from the manuscript. -->
 <p align="center">
-  <img src="assets/dfire_examples.png" alt="Representative D-Fire fire and smoke samples" width="900">
+  <img src="assets/dfire_examples.png" alt="Representative D-Fire samples containing fire, smoke, and challenging backgrounds" width="900">
 </p>
 
-### Expected directory layout
+### Required local layout
 
-One valid layout is:
+Place the downloaded split under `datasets/D-Fire` so the repository has this layout:
 
 ```text
-D-Fire/
-|-- images/
-|   |-- train/
-|   |-- val/
-|   `-- test/
-`-- labels/
-    |-- train/
-    |-- val/
-    `-- test/
+datasets/
+`-- D-Fire/
+    |-- images/
+    |   |-- train/
+    |   |-- val/
+    |   `-- test/
+    `-- labels/
+        |-- train/
+        |-- val/
+        `-- test/
 ```
 
-Create a dataset YAML file such as `dfire.yaml`:
+Create `dfire.yaml` in the repository root with the following complete content:
 
 ```yaml
-# Use an absolute path, or a path relative to this YAML file.
-path: /absolute/path/to/D-Fire
+path: datasets/D-Fire
 train: images/train
 val: images/val
 test: images/test
@@ -225,15 +245,15 @@ names:
   1: fire
 ```
 
-If your downloaded copy uses a layout such as `train/images`, `valid/images`, and `test/images`, change only the three split paths in the YAML. Do not move the dataset merely to match the example.
+If the downloaded copy uses `train/images`, `valid/images`, and `test/images`, reorganize it into the layout above or update the three split entries in `dfire.yaml`. Label files must contain normalized YOLO rows in the form `class x_center y_center width height`. A background image may have an empty label file or no objects.
 
 ### Custom datasets
 
-The same code can train on another YOLO-format detection dataset. Update `path`, `train`, `val`, `test`, and `names` in the dataset YAML. During training, Ultralytics overrides the architecture YAML's default class count with the number of classes declared by the dataset.
+The same code can train on another YOLO-format object-detection dataset. Update `path`, `train`, `val`, `test`, and `names` in `dfire.yaml`. The bundled trainer overrides the architecture YAML's default class count using the dataset YAML.
 
 ## Model catalog
 
-| Model | Family | YAML path |
+| Model | Family | YAML configuration |
 | --- | --- | --- |
 | YOLOv8n | Baseline | `Attentions/ultralytics/cfg/models/v8/yolov8.yaml` |
 | YOLOv8n-GC-M1 | Context | `Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M1.yaml` |
@@ -253,219 +273,235 @@ The same code can train on another YOLO-format detection dataset. Update `path`,
 | YOLOv8n-SA | Attention | `Attentions/ultralytics/cfg/models/v8/yolov8_SA.yaml` |
 | YOLOv8n-ResCBAM | Attention | `Attentions/ultralytics/cfg/models/v8/yolov8_ResBlock_CBAM.yaml` |
 
-Although the filenames do not include the `n` suffix, loading these YAMLs without another scale selects the nano (`n`) scale in the bundled implementation.
+Loading these files without an explicit alternative scale selects the nano (`n`) scale in the bundled implementation.
 
-## Training
+## Verify the installation
 
-### Launcher compatibility
-
-The complete commands below use the extended `start_train.py` interface expected by this combined repository:
-
-```text
---model --data_dir --epochs --batch --imgsz --device --project --name
---pretrained --seed --optimizer --lr0 --momentum --weight_decay
---warmup_epochs --close_mosaic
-```
-
-Before release, confirm both launchers expose these arguments:
+Confirm that both launchers expose the documented interface:
 
 ```bash
 python ./Attentions/start_train.py --help
 python ./Global_Contexts/start_train.py --help
 ```
 
-The two original upstream launchers accept only `--model` and `--data_dir`. If those scripts were copied unchanged, either extend them so that they forward the options above to `model.train(...)`, or run the minimal commands and set all other values in the relevant `ultralytics/cfg/default.yaml` file.
+Confirm that each source tree imports its bundled Ultralytics 8.0.147 package:
 
-### Common arguments
+```bash
+cd Attentions
+python -c "import ultralytics; print(ultralytics.__version__); print(ultralytics.__file__)"
+cd ../Global_Contexts
+python -c "import ultralytics; print(ultralytics.__version__); print(ultralytics.__file__)"
+cd ..
+```
 
-| Argument | Paper value | Meaning |
+The printed paths must point inside this repository.
+
+## Training
+
+All commands in this section are run from the repository root. They use the repository's revised launchers and the root `dfire.yaml` created above.
+
+### Initialization policy
+
+The paper-reproduction commands below train from scratch with:
+
+```text
+--pretrained False
+```
+
+This matches the behavior of the original experiment launchers, which constructed each model from its YAML configuration without loading a checkpoint. The optional [transfer-learning command](#optional-transfer-learning) explicitly loads `yolov8n.pt` and represents a different experimental condition.
+
+### Training arguments used below
+
+| Argument | Value | Meaning |
 | --- | ---: | --- |
-| `--data_dir` | user-defined | Path to the dataset YAML |
+| `--data_dir` | `./dfire.yaml` | Dataset configuration created above |
 | `--epochs` | 150 | Maximum training epochs |
 | `--batch` | 64 | Images per batch |
-| `--imgsz` | 640 | Training/validation image size |
-| `--device` | `0` | CUDA device; use `cpu` for CPU |
-| `--project` | user-defined | Parent output directory |
-| `--name` | model-specific | Run name beneath the project directory |
-| `--pretrained` | `True` | Enable the repository's pretrained initialization path |
-| `--seed` | 42 | Reproducibility seed used by these release commands |
-| `--optimizer` | `SGD` | Optimizer used in the manuscript |
+| `--imgsz` | 640 | Training and validation image size |
+| `--device` | `0` | First CUDA device |
+| `--project` | `./runs/train` | Training-output directory |
+| `--pretrained` | `False` | Train from random initialization |
+| `--seed` | 42 | Repository reproduction seed |
+| `--optimizer` | `SGD` | Optimizer |
 | `--lr0` | 0.01 | Initial learning rate |
 | `--momentum` | 0.937 | SGD momentum |
 | `--weight_decay` | 0.0005 | Weight decay |
 | `--warmup_epochs` | 3.0 | Warm-up duration |
 | `--close_mosaic` | 10 | Disable mosaic during the final 10 epochs |
+| `--workers` | 8 | Data-loader workers |
+| `--patience` | 50 | Early-stopping patience |
+| `--amp` | `True` | Automatic mixed precision |
+| `--deterministic` | `True` | Request deterministic execution |
+| `--exist_ok` | `True` | Use the requested run directory name |
 
-> **Pretraining check:** when the model is created from a custom YAML, verify in the console that the intended pretrained weights are actually transferred. If your launcher only forwards `pretrained=True` but does not load a checkpoint, use its explicit weights option or call `.load("yolov8n.pt")` before training. For training from scratch, set `--pretrained False` and rename the run accordingly.
+If an output directory already exists, choose a new `--name` before starting another experiment so results are not mixed.
 
 ### Vanilla YOLOv8n
 
 ```bash
-python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_baseline" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
+python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_baseline --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
 ```
 
 ### Global-context models: M1
 
-M1 inserts one context module after the backbone SPPF layer.
-
 ```bash
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M1.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GC_M1" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GCT_M1.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GCT_M1" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GE_M1.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GE_M1" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_SE_M1.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_SE_M1" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M1.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GC_M1 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GCT_M1.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GCT_M1 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GE_M1.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GE_M1 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_SE_M1.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_SE_M1 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
 ```
 
 ### Global-context models: M2
 
-M2 inserts one context module after the final C2f block in the neck.
-
 ```bash
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M2.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GC_M2" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GCT_M2.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GCT_M2" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GE_M2.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GE_M2" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_SE_M2.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_SE_M2" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M2.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GC_M2 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GCT_M2.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GCT_M2 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GE_M2.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GE_M2 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_SE_M2.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_SE_M2 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
 ```
 
 ### Global-context models: M3
 
-M3 inserts a context module after each neck C2f block.
-
 ```bash
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M3.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GC_M3" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GCT_M3.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GCT_M3" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GE_M3.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GE_M3" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_SE_M3.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_SE_M3" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M3.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GC_M3 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GCT_M3.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GCT_M3 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GE_M3.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GE_M3 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_SE_M3.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_SE_M3 --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
 ```
 
-### Lightweight-attention models
+### Attention models
 
 ```bash
-python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_ECA.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_ECA" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_GAM.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_GAM" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_SA.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_SA" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
-python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_ResBlock_CBAM.yaml --data_dir "/absolute/path/to/dfire.yaml" --epochs 150 --batch 64 --imgsz 640 --device 0 --project "./runs/train" --name "yolov8n_ResCBAM" --pretrained True --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10
+python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_ECA.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_ECA --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_GAM.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_GAM --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_SA.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_SA --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
+python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_ResBlock_CBAM.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_ResCBAM --pretrained False --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
 ```
 
-### Minimal commands for an unchanged upstream launcher
+### Optional transfer learning
+
+The following command initializes YOLOv8n-ResCBAM with transferable parameters from the standard YOLOv8n checkpoint. This is an optional experiment and is not the scratch-training condition reported above.
 
 ```bash
-# Context example
-python ./Global_Contexts/start_train.py --model ./Global_Contexts/ultralytics/cfg/models/v8/yolov8_GC_M1.yaml --data_dir "/absolute/path/to/dfire.yaml"
-
-# Attention example
-python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_ResBlock_CBAM.yaml --data_dir "/absolute/path/to/dfire.yaml"
+python ./Attentions/start_train.py --model ./Attentions/ultralytics/cfg/models/v8/yolov8_ResBlock_CBAM.yaml --data_dir ./dfire.yaml --epochs 150 --batch 64 --imgsz 640 --device 0 --project ./runs/train --name yolov8n_ResCBAM_pretrained --pretrained True --weights yolov8n.pt --seed 42 --optimizer SGD --lr0 0.01 --momentum 0.937 --weight_decay 0.0005 --warmup_epochs 3.0 --close_mosaic 10 --workers 8 --patience 50 --amp True --deterministic True --exist_ok True
 ```
 
-With the minimal interface, edit the correct family's `ultralytics/cfg/default.yaml` before training. Do not assume that editing one source tree changes the other.
+The first run downloads `yolov8n.pt` if it is not already available. Check the console message reporting how many parameters were transferred. Custom architecture insertions mean that not every checkpoint tensor has a matching destination.
 
-### Resume an interrupted run
+### CPU and multi-GPU selection
 
-Use the correct model-family source tree so the custom classes can be imported from the checkpoint:
+For CPU training, replace `--device 0` with `--device cpu`. For multiple visible CUDA devices, use a comma-separated value accepted by the bundled Ultralytics version, such as `--device 0,1`.
+
+## Resume training
+
+Resume an interrupted attention-model run:
 
 ```bash
 cd Attentions
-python -c "from ultralytics import YOLO; YOLO(r'../runs/train/yolov8n_ResCBAM/weights/last.pt').train(resume=True)"
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_ResCBAM/weights/last.pt').train(resume=True)"
 cd ..
 ```
 
-For a global-context checkpoint, replace `Attentions` with `Global_Contexts` and update the checkpoint path.
+Resume an interrupted context-model run:
+
+```bash
+cd Global_Contexts
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_GC_M3/weights/last.pt').train(resume=True)"
+cd ..
+```
 
 ## Validation and test evaluation
 
-Ultralytics saves the best checkpoint as:
+For example, the ResCBAM training command stores its best and latest checkpoints under `runs/train/yolov8n_ResCBAM/weights/best.pt` and `runs/train/yolov8n_ResCBAM/weights/last.pt`. The other commands use the corresponding value passed through `--name`.
 
-```text
-runs/train/<RUN_NAME>/weights/best.pt
-```
-
-Evaluate an attention-model checkpoint on the dataset's test split:
+Evaluate YOLOv8n-ResCBAM on the D-Fire test split:
 
 ```bash
 cd Attentions
-python -c "from ultralytics import YOLO; YOLO(r'../runs/train/yolov8n_ResCBAM/weights/best.pt').val(data=r'/absolute/path/to/dfire.yaml', split='test', imgsz=640, batch=64, device=0, iou=0.7, project=r'../runs/test', name='yolov8n_ResCBAM')"
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_ResCBAM/weights/best.pt').val(data='../dfire.yaml', split='test', imgsz=640, batch=64, device=0, iou=0.7, project='../runs/test', name='yolov8n_ResCBAM')"
 cd ..
 ```
 
-Evaluate a global-context checkpoint:
+Evaluate YOLOv8n-GC-M3 on the test split:
 
 ```bash
 cd Global_Contexts
-python -c "from ultralytics import YOLO; YOLO(r'../runs/train/yolov8n_GC_M3/weights/best.pt').val(data=r'/absolute/path/to/dfire.yaml', split='test', imgsz=640, batch=64, device=0, iou=0.7, project=r'../runs/test', name='yolov8n_GC_M3')"
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_GC_M3/weights/best.pt').val(data='../dfire.yaml', split='test', imgsz=640, batch=64, device=0, iou=0.7, project='../runs/test', name='yolov8n_GC_M3')"
 cd ..
 ```
 
-In the paper, `iou=0.7` is the NMS overlap threshold used during validation; it is not the single IoU threshold used to declare all true positives. The reported mAP50-95 integrates AP over IoU thresholds from 0.50 to 0.95.
+Here, `iou=0.7` is the non-maximum-suppression overlap threshold used during validation. It is not a single true-positive matching threshold. mAP50-95 averages AP over IoU thresholds from 0.50 through 0.95.
 
 ## Inference
 
-`source` may be a single image, directory, video, webcam index, or supported stream URL.
+Trained checkpoints are not included in this repository. Complete training or supply a compatible checkpoint before running inference.
 
-### YOLOv8n-ResCBAM or another attention checkpoint
+Run YOLOv8n-ResCBAM on the included D-Fire sample figure:
 
 ```bash
 cd Attentions
-python -c "from ultralytics import YOLO; YOLO(r'../runs/train/yolov8n_ResCBAM/weights/best.pt').predict(source=r'/absolute/path/to/images-or-video', imgsz=640, conf=0.25, iou=0.7, device=0, save=True, project=r'../runs/predict', name='rescbam_predictions')"
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_ResCBAM/weights/best.pt').predict(source='../assets/dfire_examples.png', imgsz=640, conf=0.25, iou=0.7, device=0, save=True, project='../runs/predict', name='rescbam_predictions')"
 cd ..
 ```
 
-### GC/GCT/GE/SE checkpoint
+Run YOLOv8n-GC-M3 on the same image:
 
 ```bash
 cd Global_Contexts
-python -c "from ultralytics import YOLO; YOLO(r'../runs/train/yolov8n_GC_M3/weights/best.pt').predict(source=r'/absolute/path/to/images-or-video', imgsz=640, conf=0.25, iou=0.7, device=0, save=True, project=r'../runs/predict', name='gc_m3_predictions')"
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_GC_M3/weights/best.pt').predict(source='../assets/dfire_examples.png', imgsz=640, conf=0.25, iou=0.7, device=0, save=True, project='../runs/predict', name='gc_m3_predictions')"
 cd ..
 ```
 
-Useful prediction arguments:
-
-| Argument | Example | Description |
-| --- | --- | --- |
-| `source` | `image.jpg`, `images/`, `video.mp4`, `0` | Input source |
-| `conf` | `0.25` | Confidence threshold; tune for the deployment operating point |
-| `iou` | `0.7` | NMS IoU threshold |
-| `device` | `0`, `0,1`, or `cpu` | Compute device |
-| `save` | `True` | Save annotated outputs |
-| `save_txt` | `True` | Optionally save YOLO-format predictions |
-| `save_conf` | `True` | Include confidence values in saved text predictions |
-
-For CPU inference, change `device=0` to `device='cpu'`.
+The `source` argument can also be changed to a local image, image directory, video, webcam index, or supported stream URL. Useful options include `save_txt=True` for YOLO-format prediction files and `save_conf=True` to include confidence values.
 
 ### Python API
 
-Run the script from inside the source tree corresponding to the checkpoint:
+Place the following script inside `Attentions/` when loading an attention checkpoint:
 
 ```python
 from ultralytics import YOLO
 
 model = YOLO("../runs/train/yolov8n_ResCBAM/weights/best.pt")
 results = model.predict(
-    source="/absolute/path/to/image.jpg",
+    source="../assets/dfire_examples.png",
     imgsz=640,
     conf=0.25,
     iou=0.7,
     device=0,
     save=True,
+    project="../runs/predict",
+    name="rescbam_python_predictions",
 )
 
 for result in results:
     print(result.boxes)
 ```
 
+Use `Global_Contexts/` instead when loading a GC, GCT, GE, or SE checkpoint.
+
 ## Export
 
-Export an attention checkpoint to ONNX:
+Export YOLOv8n-ResCBAM to ONNX:
 
 ```bash
 cd Attentions
-python -c "from ultralytics import YOLO; YOLO(r'../runs/train/yolov8n_ResCBAM/weights/best.pt').export(format='onnx', imgsz=640, opset=12, simplify=True)"
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_ResCBAM/weights/best.pt').export(format='onnx', imgsz=640, opset=12, simplify=True)"
 cd ..
 ```
 
-For a context checkpoint, run the same command from `Global_Contexts/`. Other export targets supported by the bundled Ultralytics version may include TorchScript, OpenVINO, TensorRT, CoreML, TensorFlow SavedModel, TFLite, and TF.js. Export support depends on the custom module and installed backend; validate numerical parity and runtime behavior before deployment.
+Export YOLOv8n-GC-M3 to ONNX:
+
+```bash
+cd Global_Contexts
+python -c "from ultralytics import YOLO; YOLO('../runs/train/yolov8n_GC_M3/weights/best.pt').export(format='onnx', imgsz=640, opset=12, simplify=True)"
+cd ..
+```
+
+Other backends available in the bundled Ultralytics release may require additional platform-specific dependencies. Validate exported-model numerical parity on representative samples before deployment.
 
 ## Paper results
 
-All results below are from the isolated D-Fire test partition described in the manuscript. `P`, `R`, and `F1` are reported separately for all classes, smoke, and fire.
+All values below are from the isolated 4,306-image D-Fire test partition reported in the manuscript. Precision (`P`), recall (`R`), and F1 are reported for all classes and separately for smoke and fire.
 
 | Model | Overall P | Overall R | Overall F1 | Smoke P | Smoke R | Smoke F1 | Fire P | Fire R | Fire F1 | Params (M) | GFLOPs | ms/image |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -493,93 +529,111 @@ Headline mAP results:
 | --- | ---: | ---: |
 | YOLOv8n, overall | 0.746 | 0.426 |
 | YOLOv8n-ResCBAM, overall | approximately 0.790 | **0.465** |
-| YOLOv8n-ResCBAM, smoke | not shown here | **0.543** |
-| YOLOv8n-ECA, fire | not shown here | **0.391** |
+| YOLOv8n-ResCBAM, smoke | Not separately reported | **0.543** |
+| YOLOv8n-ECA, fire | Not separately reported | **0.391** |
 
-Relative to vanilla YOLOv8n, ResCBAM improved overall F1 by 3.94%, overall mAP50 by 5.89%, and overall mAP50-95 by 9.15%. ECA produced the strongest fire F1-score in the attention comparison.
+Relative to vanilla YOLOv8n, ResCBAM improved overall F1 by 3.94%, overall mAP50 by approximately 5.89%, and overall mAP50-95 by 9.15%. ECA produced the highest fire F1 in the attention comparison.
 
-Inference times are hardware- and software-dependent. The values above were measured under the paper's experimental environment and should not be treated as deployment guarantees.
+Inference times depend on hardware, software, batch size, precision, data transfer, and timing methodology. The values above were measured in the manuscript's environment and are not deployment guarantees.
 
-<!-- Replace with the paper's quantitative comparison figure. -->
-<!-- <p align="center">
-  <img src="assets/performance_comparison.png" alt="Quantitative performance comparison of all YOLOv8n variants" width="950">
-</p>
-
-Replace with the paper's qualitative baseline-versus-ResCBAM detections. -->
-<!-- <p align="center">
-  <img src="assets/qualitative_comparison.png" alt="Qualitative comparison between YOLOv8n and YOLOv8n-ResCBAM" width="950">
-</p> -->
-
-## Reproducing the paper protocol
-
-Use the following settings for the closest reproduction of the manuscript experiments:
+## Reproducibility notes
 
 | Item | Setting |
 | --- | --- |
 | Input resolution | 640 x 640 with YOLO letterbox resizing |
-| Epochs | 150 |
+| Maximum epochs | 150 |
 | Batch size | 64 |
 | Optimizer | SGD |
 | Initial learning rate | 0.01 |
 | Momentum | 0.937 |
 | Weight decay | 0.0005 |
 | Warm-up | Epochs 0-3, increasing from near zero to 0.01 |
-| Augmentation | Bundled/default YOLOv8 HSV, translation, scaling, horizontal flip, and mosaic |
-| Mosaic | Disabled for final 10 epochs |
+| Augmentation | Bundled YOLOv8 HSV, translation, scaling, horizontal flip, and mosaic |
+| Mosaic | Disabled during the final 10 epochs |
 | Validation NMS IoU | 0.7 |
-| Training/testing hardware | NVIDIA V100 SXM2 16 GB and Intel Gold 6148 2.4 GHz |
+| Repository command seed | 42 |
+| Training initialization | From scratch for the reproduction commands |
+| Reported hardware | NVIDIA V100 SXM2 16 GB and Intel Gold 6148 2.4 GHz |
 
-For a fair comparison:
+For a controlled comparison:
 
-1. Keep the D-Fire test split isolated until all model and threshold decisions are frozen.
-2. Use the same train/validation/test manifests for every configuration.
-3. Keep augmentation, optimizer, image size, batch size, and stopping policy identical across models.
-4. Record the exact repository commit, Python/PyTorch/CUDA versions, seed, and transferred pretrained layers.
-5. Report both overall and class-specific metrics because a change can help smoke detection without producing the same gain for fire.
+1. Use the same train, validation, and test files for every configuration.
+2. Keep the test set isolated until architecture, hyperparameter, and threshold decisions are complete.
+3. Keep initialization policy, augmentation, optimizer, image size, batch size, and stopping policy identical across models.
+4. Record the repository commit, Python, PyTorch, CUDA, cuDNN, GPU, and transferred-weight count for every run.
+5. Report class-specific metrics because a model can improve smoke detection without producing the same change for fire.
 
-The manuscript reports one training seed. Small score differences may occur across hardware, CUDA/cuDNN versions, dependency versions, and nondeterministic GPU operations.
+The manuscript reports a single training run per configuration. Small differences may occur across hardware, CUDA/cuDNN versions, dependency versions, and nondeterministic GPU operations even when deterministic execution is requested.
 
 ## Limitations
 
 - Evaluation was performed on D-Fire only; cross-dataset generalization remains unverified.
-- The study reports a single training seed, so uncertainty across repeated runs was not measured.
-- Source-scene and video-group identifiers were unavailable; the split was therefore handled at image level.
-- Cloud, fog, and haze are not separate labeled classes in D-Fire, limiting class-specific analysis of atmospheric false positives.
-- The reported speed was measured on a V100-class GPU; edge-device latency, energy use, and memory behavior require dedicated benchmarking.
-- The released models process individual frames and do not exploit temporal video information.
+- The study reports a single run per configuration, so uncertainty across repeated runs was not measured.
+- Source-scene and video-group identifiers were unavailable; the split was handled at image level.
+- Cloud, fog, mist, and haze are not separate D-Fire classes, limiting class-specific analysis of atmospheric false positives.
+- Reported latency was measured on a V100-class GPU; edge-device latency, energy consumption, and memory behavior require dedicated benchmarking.
+- The released detectors process individual frames and do not model temporal video information.
+- Trained paper checkpoints are not distributed in this repository.
 
 ## Troubleshooting
 
-### `ModuleNotFoundError` for a custom attention/context class
+### Custom module cannot be imported
 
-Run from the correct subdirectory or use its launcher. A checkpoint trained with `Attentions/` should be loaded while that directory is the active local package; a context checkpoint should be loaded from `Global_Contexts/`.
+Use the correct launcher for training and the correct working directory for checkpoint loading:
 
-### A newer installed `ultralytics` package is imported
+- `Attentions/` for ECA, GAM, SA, ResCBAM, and the baseline configuration used here.
+- `Global_Contexts/` for GC, GCT, GE, and SE.
 
-Check the import path:
+### A different Ultralytics package is imported
 
-```bash
-cd Attentions
-python -c "import ultralytics; print(ultralytics.__version__); print(ultralytics.__file__)"
-cd ..
-```
-
-The path should point inside this repository, and the bundled version should report `8.0.147`.
+Run the import checks in [Verify the installation](#verify-the-installation). The version must be `8.0.147`, and the file path must point inside this repository. Do not install the separate `ultralytics` PyPI package into this environment.
 
 ### CUDA out of memory
 
-Reduce `--batch` first. If necessary, reduce `--imgsz`, but note that changing the image size no longer reproduces the paper protocol.
+Reduce `--batch` first. If necessary, reduce `--imgsz`, but changing the input resolution no longer reproduces the paper protocol.
 
-### Dataset not found or labels not detected
+### Windows data-loader errors
 
-Use an absolute dataset root in the YAML, verify that every image split has the matching label directory, and confirm that labels follow `class x_center y_center width height` with normalized coordinates.
+Set `--workers 0`. This reduces parallel data loading but avoids common multiprocessing issues on Windows.
 
-### Existing run directory causes an automatic name suffix
+### Dataset or labels are not found
 
-Choose a new `--name`, remove/relocate the previous run intentionally, or enable overwrite behavior only if your launcher exposes it and you understand the consequences.
+Confirm that `dfire.yaml` is in the repository root, `path` is `datasets/D-Fire`, and each image directory has a matching label directory. Class identifiers must be `0` for smoke and `1` for fire.
 
+### Existing results could be overwritten
 
-If you use D-Fire, also cite the dataset authors as requested by the [D-Fire project](https://github.com/gaia-solutions-on-demand/DFireDataset).
+Each published command uses a unique run name. Before repeating a command, change `--name` or set `--exist_ok False` so Ultralytics creates an incremented directory.
+
+### Pretrained weights are not transferred
+
+Pretrained initialization requires both `--pretrained True` and `--weights yolov8n.pt`. Verify the transferred-item count printed by the model loader. The paper-reproduction commands intentionally use `--pretrained False`.
+
+## Citation
+
+If this repository contributes to your research, cite the manuscript:
+
+```bibtex
+@unpublished{parisouj2026yolov8nrescbam,
+  title  = {YOLOv8n-ResCBAM: A Lightweight Attention Network for Early Wildfire Detection Oriented to Smart City Monitoring},
+  author = {Parisouj, Peiman and Aghalou, Hooman and Bateni, Sayed M. and Jun, Changhyun and Heggy, Essam},
+  note   = {Manuscript ARRAY-D-26-02892R1, submitted to Array},
+  year   = {2026}
+}
+```
+
+If you use D-Fire, also cite the dataset paper:
+
+```bibtex
+@article{devenancio2022automatic,
+  title   = {An Automatic Fire Detection System Based on Deep Convolutional Neural Networks for Low-Power, Resource-Constrained Devices},
+  author  = {de Venancio, Pedro Vinicius A. B. and Lisboa, Adriano C. and Barbosa, Adriano V.},
+  journal = {Neural Computing and Applications},
+  volume  = {34},
+  pages   = {15349--15368},
+  year    = {2022},
+  doi     = {10.1007/s00521-022-07467-z}
+}
+```
 
 ## Acknowledgments
 
@@ -590,25 +644,24 @@ This implementation adapts module definitions and configuration patterns from:
 - [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics), which provides the base detection framework.
 - [D-Fire](https://github.com/gaia-solutions-on-demand/DFireDataset), which provides the fire and smoke dataset used in the study.
 
-Please cite the relevant upstream publications when using the corresponding implementations.
+Please cite the relevant upstream publications when using their implementations:
 
-## Funding
+- Rui-Yang Ju, Chun-Tse Chien, Enkaer Xieerke, and Jen-Shiun Chiang, “Pediatric Wrist Fracture Detection Using Feature Context Excitation Modules in X-ray Images,” *IET Image Processing*, 20(1), e70269, 2026.
+- Chun-Tse Chien, Rui-Yang Ju, Kuang-Yi Chou, Enkaer Xieerke, and Jen-Shiun Chiang, “YOLOv8-AM: YOLOv8 Based on Effective Attention Mechanisms for Pediatric Wrist Fracture Detection,” *IEEE Access*, vol. 13, pp. 52461-52477, 2025.
 
 This research was supported by NSF grant no. 2431050 awarded to the University of Hawai'i at Manoa.
 
 ## License
 
-This repository is licensed under the GNU Affero General Public License
-v3.0 (`AGPL-3.0`). See [LICENSE](LICENSE) for the complete terms.
+This repository is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
-This project contains modified Ultralytics YOLOv8 source code and therefore
-must comply with the Ultralytics AGPL-3.0 licensing requirements.
+The repository contains modified Ultralytics YOLOv8 source code and must comply with the applicable AGPL-3.0 terms. Context and attention implementations were adapted from MIT-licensed upstream repositories; their original copyright and license notices are preserved in:
 
-The context and attention module implementations were adapted from
-MIT-licensed upstream repositories. Their original copyright and license
-notices are preserved in the corresponding source directories.
+- [`Attentions/LICENSE.txt`](Attentions/LICENSE.txt)
+- [`Global_Contexts/LICENSE.txt`](Global_Contexts/LICENSE.txt)
 
-The D-Fire dataset is not distributed with this repository and remains
-subject to its own license and terms.
+The full D-Fire dataset is not bundled with this repository. The displayed D-Fire sample figure is derived from the CC0-1.0 dataset and is included for research documentation.
 
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+## Support
+
+For reproducible bug reports, open a [GitHub issue](https://github.com/Hooman1996/Attention-Enhanced-YOLOv8n-Fire-Smoke-Detection/issues) and include the model YAML, command, operating system, Python/PyTorch/CUDA versions, GPU, and complete traceback.

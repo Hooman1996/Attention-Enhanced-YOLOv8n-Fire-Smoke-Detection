@@ -42,7 +42,6 @@ On the isolated D-Fire test partition, YOLOv8n-ResCBAM achieved the best overall
 - [Reproducibility notes](#reproducibility-notes)
 - [Limitations](#limitations)
 - [Troubleshooting](#troubleshooting)
-- [Citation](#citation)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
 - [Support](#support)
@@ -607,33 +606,6 @@ Each published command uses a unique run name. Before repeating a command, chang
 ### Pretrained weights are not transferred
 
 Pretrained initialization requires both `--pretrained True` and `--weights yolov8n.pt`. Verify the transferred-item count printed by the model loader. The paper-reproduction commands intentionally use `--pretrained False`.
-
-## Citation
-
-If this repository contributes to your research, cite the manuscript:
-
-```bibtex
-@unpublished{parisouj2026yolov8nrescbam,
-  title  = {YOLOv8n-ResCBAM: A Lightweight Attention Network for Early Wildfire Detection Oriented to Smart City Monitoring},
-  author = {Parisouj, Peiman and Aghalou, Hooman and Bateni, Sayed M. and Jun, Changhyun and Heggy, Essam},
-  note   = {Manuscript ARRAY-D-26-02892R1, submitted to Array},
-  year   = {2026}
-}
-```
-
-If you use D-Fire, also cite the dataset paper:
-
-```bibtex
-@article{devenancio2022automatic,
-  title   = {An Automatic Fire Detection System Based on Deep Convolutional Neural Networks for Low-Power, Resource-Constrained Devices},
-  author  = {de Venancio, Pedro Vinicius A. B. and Lisboa, Adriano C. and Barbosa, Adriano V.},
-  journal = {Neural Computing and Applications},
-  volume  = {34},
-  pages   = {15349--15368},
-  year    = {2022},
-  doi     = {10.1007/s00521-022-07467-z}
-}
-```
 
 ## Acknowledgments
 

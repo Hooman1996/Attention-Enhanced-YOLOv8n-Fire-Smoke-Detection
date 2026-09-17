@@ -108,7 +108,7 @@ Fire-and-Smoke-Detection/
 |           |-- yolov8_SE_M1.yaml
 |           |-- yolov8_SE_M2.yaml
 |           `-- yolov8_SE_M3.yaml
-|-- assets/                         # Add the paper figures here
+|-- assets/                        
 |-- requirements.txt
 `-- README.md
 ```
@@ -503,14 +503,14 @@ Relative to vanilla YOLOv8n, ResCBAM improved overall F1 by 3.94%, overall mAP50
 Inference times are hardware- and software-dependent. The values above were measured under the paper's experimental environment and should not be treated as deployment guarantees.
 
 <!-- Replace with the paper's quantitative comparison figure. -->
-<p align="center">
+<!-- <p align="center">
   <img src="assets/performance_comparison.png" alt="Quantitative performance comparison of all YOLOv8n variants" width="950">
 </p>
 
-<!-- Replace with the paper's qualitative baseline-versus-ResCBAM detections. -->
-<p align="center">
+Replace with the paper's qualitative baseline-versus-ResCBAM detections. -->
+<!-- <p align="center">
   <img src="assets/qualitative_comparison.png" alt="Qualitative comparison between YOLOv8n and YOLOv8n-ResCBAM" width="950">
-</p>
+</p> -->
 
 ## Reproducing the paper protocol
 
@@ -608,19 +608,6 @@ Use an absolute dataset root in the YAML, verify that every image split has the 
 
 Choose a new `--name`, remove/relocate the previous run intentionally, or enable overwrite behavior only if your launcher exposes it and you understand the consequences.
 
-## Citation
-
-The manuscript is under review. Update the journal metadata, DOI, volume, issue, and article number after publication.
-
-```bibtex
-@article{parisouj2026yolov8nrescbam,
-  title   = {YOLOv8n-ResCBAM: A Lightweight Attention Network for Early Wildfire Detection Oriented to Smart City Monitoring},
-  author  = {Parisouj, Peiman and Aghalou, Hooman and Bateni, Sayed M. and Jun, Changhyun and Heggy, Essam},
-  journal = {Array},
-  year    = {2026},
-  note    = {Manuscript under review}
-}
-```
 
 If you use D-Fire, also cite the dataset authors as requested by the [D-Fire project](https://github.com/gaia-solutions-on-demand/DFireDataset).
 
@@ -641,5 +628,16 @@ This research was supported by NSF grant no. 2431050 awarded to the University o
 
 ## License
 
-The two upstream module repositories are distributed under the MIT License, while files in the bundled Ultralytics source trees contain AGPL-3.0 license notices. D-Fire is distributed under its own dataset license. Before public release, add a top-level `LICENSE` file and preserve all applicable upstream copyright and license notices.
+This repository is licensed under the GNU Affero General Public License
+v3.0 (`AGPL-3.0`). See [LICENSE](LICENSE) for the complete terms.
+
+This project contains modified Ultralytics YOLOv8 source code and therefore
+must comply with the Ultralytics AGPL-3.0 licensing requirements.
+
+The context and attention module implementations were adapted from
+MIT-licensed upstream repositories. Their original copyright and license
+notices are preserved in the corresponding source directories.
+
+The D-Fire dataset is not distributed with this repository and remains
+subject to its own license and terms.
 

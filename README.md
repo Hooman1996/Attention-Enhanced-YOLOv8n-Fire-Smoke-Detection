@@ -33,9 +33,7 @@ The models were evaluated on the [D-Fire dataset](https://github.com/gaia-soluti
 - [Export](#export)
 - [Paper results](#paper-results)
 - [Reproducing the paper protocol](#reproducing-the-paper-protocol)
-- [Adding the paper figures](#adding-the-paper-figures)
 - [Limitations](#limitations)
-- [Citation](#citation)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
 
@@ -120,8 +118,8 @@ Fire-and-Smoke-Detection/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/OWNER/REPOSITORY.git
-cd REPOSITORY
+git clone https://github.com/Hooman1996/Attention-Enhanced-YOLOv8n-Fire-Smoke-Detection.git
+cd Attention-Enhanced-YOLOv8n-Fire-Smoke-Detection
 ```
 
 Replace `OWNER/REPOSITORY` with this repository's final GitHub path.
@@ -541,34 +539,6 @@ For a fair comparison:
 
 The manuscript reports one training seed. Small score differences may occur across hardware, CUDA/cuDNN versions, dependency versions, and nondeterministic GPU operations.
 
-## Adding the paper figures
-
-Create an `assets/` directory and add the final publication-quality figures using these filenames, or change the references in this README:
-
-| README location | Expected file | Suggested paper content |
-| --- | --- | --- |
-| Top of README | `assets/graphical_abstract.png` | Graphical abstract |
-| Method overview | `assets/architecture_and_insertion_strategies.png` | YOLOv8n and M1/M2/M3 architecture diagrams |
-| Dataset section | `assets/dfire_examples.png` | Representative D-Fire samples and labels |
-| Results section | `assets/performance_comparison.png` | Overall/class-specific metric comparison |
-| Results section | `assets/qualitative_comparison.png` | Ground truth, vanilla predictions, and ResCBAM predictions |
-
-Optional additional figures:
-
-```markdown
-![ResCBAM precision-recall curves](assets/rescbam_pr_curves.png)
-![ResCBAM confusion matrix](assets/rescbam_confusion_matrix.png)
-![Improvement over vanilla YOLOv8n](assets/rescbam_relative_improvement.png)
-```
-
-Recommended image guidance:
-
-- Use PNG for plots, diagrams, and screenshots with text; use high-quality JPEG only for photographic grids.
-- Crop excess white margins before committing.
-- Keep text readable at GitHub's default content width.
-- Do not include copyrighted figures from third-party papers without permission.
-- Add a short, descriptive `alt` value for accessibility.
-
 ## Limitations
 
 - Evaluation was performed on D-Fire only; cross-dataset generalization remains unverified.
@@ -641,3 +611,4 @@ notices are preserved in the corresponding source directories.
 The D-Fire dataset is not distributed with this repository and remains
 subject to its own license and terms.
 
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
